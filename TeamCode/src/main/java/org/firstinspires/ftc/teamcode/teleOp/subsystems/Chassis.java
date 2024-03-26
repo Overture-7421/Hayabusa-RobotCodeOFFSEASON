@@ -24,6 +24,8 @@ public class Chassis extends SubsystemBase {
 
     private IMU imu;
 
+    private int leftOffset = 0, rightOffset = 0;
+
     public Chassis(HardwareMap hardwareMap) {
         //Motor ID
         left_Drive = (DcMotorEx) hardwareMap.get(DcMotor.class, "left_Drive");
@@ -37,13 +39,33 @@ public class Chassis extends SubsystemBase {
         diffOdom = new DifferentialDriveOdometry(new Rotation2d());
         imu = hardwareMap.get(IMU.class, "imu");
 
-        //Where the IMU is facing and where it is located
+        //Where the IMU is facing and where the USB port is located
         IMU.Parameters imuParameters = new IMU.Parameters(
                 new RevHubOrientationOnRobot(RevHubOrientationOnRobot.LogoFacingDirection.BACKWARD,
                         RevHubOrientationOnRobot.UsbFacingDirection.UP)
         );
 
+        //Initialize and reset imu
+        imu.initialize(imuParameters);
+        imu.resetYaw();
+
     }
+
+    //Set speed function. Let MoveChassis set the values itself
+    public void setSpeed(double linearSpeed, double angularSpeed) {
+        left_Drive.setPower(linearSpeed - angularSpeed);
+        right_Drive.setPower(linearSpeed + angularSpeed);
+    }
+
+    public double leftDistance() {
+        return (left_Drive.getCurrentPosition() - leftOffset) * M_PER_TICK;
+    }
+
+    public double rightDistance() {
+        return (left_Drive.getCurrentPosition() - leftOffset) * M_PER_TICK;
+    }
+
+
 
 
 }
