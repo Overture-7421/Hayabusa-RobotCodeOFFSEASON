@@ -1,16 +1,18 @@
 package org.firstinspires.ftc.teamcode.teleOp.subsystems;
 
-
 import com.arcrobotics.ftclib.command.SubsystemBase;
+import com.arcrobotics.ftclib.geometry.Pose2d;
 import com.arcrobotics.ftclib.geometry.Rotation2d;
-import com.arcrobotics.ftclib.kinematics.DifferentialOdometry;
 import com.arcrobotics.ftclib.kinematics.wpilibkinematics.DifferentialDriveOdometry;
+
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.IMU;
+
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 
 public class Chassis extends SubsystemBase {
     //Motor declaration
@@ -57,15 +59,35 @@ public class Chassis extends SubsystemBase {
         right_Drive.setPower(linearSpeed + angularSpeed);
     }
 
+    //Get left distance (position)
     public double leftDistance() {
         return (left_Drive.getCurrentPosition() - leftOffset) * M_PER_TICK;
     }
 
+    //Get right distance (position)
     public double rightDistance() {
-        return (left_Drive.getCurrentPosition() - leftOffset) * M_PER_TICK;
+        return (right_Drive.getCurrentPosition() - rightOffset) * M_PER_TICK;
     }
 
+    public void resetPose(Pose2d pose) {
+        leftOffset = left_Drive.getCurrentPosition();
+        rightOffset = right_Drive.getCurrentPosition();
+        diffOdom.resetPosition(pose, getIMUHeading());
+    }
 
+    public Pose2d getPose() { return diffOdom.getPoseMeters(); }
+
+    @Override
+    public void periodic() {
+        diffOdom.update(getIMUHeading(), leftDistance(), rightDistance());
+    }
+
+    private Rotation2d getIMUHeading() {
+        YawPitchRollAngles robotOrientation;
+        robotOrientation = imu.getRobotYawPitchRollAngles();
+
+        return Rotation2d.fromDegrees(robotOrientation.getYaw(AngleUnit.DEGREES));
+    }
 
 
 }
